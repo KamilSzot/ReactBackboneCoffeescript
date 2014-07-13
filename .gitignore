@@ -1,2 +1,4 @@
-bower_compoenents
-node_modules
+bower_components/
+node_modules/
+build/
+
