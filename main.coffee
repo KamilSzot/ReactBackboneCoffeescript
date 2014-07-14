@@ -77,7 +77,10 @@ BackboneCollection = (modelPropName) ->
     getInitialState: ->
       @props[modelPropName].on 'add', (event) =>
         @setState @state
-      
+      @props[modelPropName].on 'remove', (event) =>
+        console.log event
+        @setState @state
+       
       state = {}
       state[modelPropName] = @props[modelPropName].models
       state
@@ -104,11 +107,11 @@ Task = React.createClass
       @cancel()
   save: ->
     @props.onEdited && @props.onEdited(@props.task, @state.edited)
+    @props.task.set @state.edited
     @setState { edited: false }
   cancel: ->
     @setState { edited: false }
   render: ->
-    
     li {}, 
       if @state.edited
         span {},
@@ -126,15 +129,11 @@ TaskList = React.createClass
   appendTask: (taskData) ->
     @props.tasks.add(new @props.tasks.model(taskData))
     @refs.taskCreator.focus()
-  removedTask: (task) ->
-    tasks = _.clone(@state.tasks)
-    tasks.splice(@state.tasks.indexOf(task), 1)
-    @setState({ tasks: tasks })
+  removedTask: (taskData) ->
+    @props.tasks.remove(taskData)
     @refs.taskCreator.focus()
-  editedTask: (task, newTask) ->
-    tasks = _.clone(@state.tasks);
-    tasks[tasks.indexOf(task)] = newTask;
-    @setState({ tasks: tasks })
+  editedTask: (task, newTaskData) ->
+    console.log [task, newTaskData]
   render: ->
     self = this
     div { className: "panel" },
