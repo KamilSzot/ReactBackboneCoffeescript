@@ -47,10 +47,10 @@ TaskCreator = React.createClass
 BackboneModel = (modelPropName) ->
   { 
     componentWillUpdate: (nextProps, nextState) ->
-      change = _.chain(nextState)
+      change = _.chain(nextState[modelPropName])
         .pairs()
-        .reject(([key, value]) => @state[key] == value)
-        .filter(([key, value]) => key in @props[modelPropName].attributes)
+        .reject(([key, value]) => @state[modelPropName][key] == value)
+        .filter(([key, value]) => key of @props[modelPropName].attributes)
       if change.size().value() > 0
         @props[modelPropName].set(change.object().value())
     getInitialState: ->
@@ -60,10 +60,12 @@ BackboneModel = (modelPropName) ->
           event._previousAttributes[key] == value
         )
         if change.size().value() > 0
-          console.log(change.object().value());
+#           console.log(change.object().value());
           @setState change.object().value()
       
-      @props[modelPropName].attributes
+      state = {}
+      state[modelPropName] = @props[modelPropName].attributes
+      state
   }
         
 BackboneCollection = (modelPropName) ->
@@ -78,7 +80,7 @@ BackboneCollection = (modelPropName) ->
       @props[modelPropName].on 'add', (event) =>
         @setState @state
       @props[modelPropName].on 'remove', (event) =>
-        console.log event
+#         console.log event
         @setState @state
        
       state = {}
@@ -89,7 +91,7 @@ BackboneCollection = (modelPropName) ->
 l = console.log.bind(console)
 
 Task = React.createClass
-  mixins: [ BackboneModel('task') ]      
+  mixins: [ BackboneModel('task') ]
   getInitialState: ->
     edited: false
   remove: ->
@@ -107,11 +109,11 @@ Task = React.createClass
       @cancel()
   save: ->
     @props.onEdited && @props.onEdited(@props.task, @state.edited)
-    @props.task.set @state.edited
-    @setState { edited: false }
+    @setState _.extend { task: @state.edited, edited: false }
   cancel: ->
     @setState { edited: false }
   render: ->
+#     console.log @state
     li {}, 
       if @state.edited
         span {},
@@ -122,7 +124,7 @@ Task = React.createClass
         span {},
           ButtonGlyph { onClick: @remove, glyph: 'trash' }
           ButtonGlyph { onClick: @edit, glyph: 'pencil' }
-          span {}, @state.description  
+          span {}, @state.task.description  
    
 TaskList = React.createClass
   mixins: [ BackboneCollection('tasks') ]      
@@ -179,13 +181,29 @@ App = React.createClass
 # tasksAll = new models.Tasks();
 # tasksAll.url = 'http://localhost:8081/backend.php?all'
 
-TaskModel = Backbone.Model.extend { description: "" }
-TasksCollection = Backbone.Collection.extend { model: TaskModel } 
+TaskModel = Backbone.Model.extend 
+  urlRoot: 'http://localhost:8081/task'
+  description: ""
+  initialize: -> 
+    @on 'change', -> 
+      @save()
+
+
+      
+
+TasksCollection = Backbone.Collection.extend
+  model: TaskModel
+  url: 'http://localhost:8081/task' 
+    
 
 tasksCollection = new TasksCollection [ 
-  new TaskModel({ description: "First" }),
-  new TaskModel({ description: "Second" })
 ]
+
+tasksCollection.fetch().done ->
+  tasksCollection.models[0].set({ description: "TesT" });
+#   tasksCollection.models[0].save();
+
+
 
 React.renderComponent App( model: tasksCollection ), document.body 
 
