@@ -44,12 +44,18 @@ TaskCreator = React.createClass
           onClick: @createTask
         }, "Add task"
     
+pair = (key, value)->
+  p = {}
+  p[key] = value
+  p
+  
+    
 BackboneModel = (modelPropName) ->
   { 
-    componentWillUpdate: (nextProps, nextState) ->
-      change = _.chain(nextState[modelPropName])
+    componentDidUpdate: (prevProps, prevState) ->
+      change = _.chain(@state[modelPropName])
         .pairs()
-        .reject(([key, value]) => @state[modelPropName][key] == value)
+        .reject(([key, value]) => prevState[modelPropName][key] == value)
         .filter(([key, value]) => key of @props[modelPropName].attributes)
       if change.size().value() > 0
         @props[modelPropName].set(change.object().value())
@@ -60,12 +66,9 @@ BackboneModel = (modelPropName) ->
           event._previousAttributes[key] == value
         )
         if change.size().value() > 0
-#           console.log(change.object().value());
-          @setState change.object().value()
+          @setState pair modelPropName, change.object().value() 
       
-      state = {}
-      state[modelPropName] = @props[modelPropName].attributes
-      state
+      pair modelPropName, @props[modelPropName].attributes
   }
         
 BackboneCollection = (modelPropName) ->
@@ -116,12 +119,12 @@ Task = React.createClass
 #     console.log @state
     li {}, 
       if @state.edited
-        span {},
+        span {}, (if @state.task.important then "[*]"),
           ButtonGlyph { onClick: @save, glyph: 'ok'}
           ButtonGlyph { onClick: @cancel, glyph: 'remove' }
           input { ref: "description", value: @state.edited.description, onChange: @descriptionChanged, onKeyDown: @keyDown }
       else
-        span {},
+        span {}, (if @state.task.important then "[*]"),
           ButtonGlyph { onClick: @remove, glyph: 'trash' }
           ButtonGlyph { onClick: @edit, glyph: 'pencil' }
           span {}, @state.task.description  
@@ -200,12 +203,12 @@ tasksCollection = new TasksCollection [
 ]
 
 tasksCollection.fetch().done ->
-  tasksCollection.models[0].set({ description: "TesT" });
+#   tasksCollection.models[0].set({ description: "TesT" });
 #   tasksCollection.models[0].save();
 
 
 
-React.renderComponent App( model: tasksCollection ), document.body 
+  React.renderComponent App( model: tasksCollection ), document.body 
 
 # FooterModel = Backbone.Model.extend { text: "" }
 # footer = new FooterModel({});
