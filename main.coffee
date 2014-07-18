@@ -52,13 +52,13 @@ pair = (key, value)->
   
     
 BackboneModel = (modelPropName) ->
-#   componentDidUpdate: (prevProps, prevState) ->
-#     change = _.chain(@state[modelPropName])
-#       .pairs()
-#       .reject(([key, value]) => prevState[modelPropName][key] == value)
-#       .filter(([key, value]) => key of @props[modelPropName].attributes)
-#     if change.size().value() > 0
-#       @props[modelPropName].set(change.object().value())
+  componentDidUpdate: (prevProps, prevState) ->
+    change = _.chain(@state[modelPropName])
+      .pairs()
+      .reject(([key, value]) => prevState[modelPropName][key] == value)
+      .filter(([key, value]) => key of @props[modelPropName].attributes)
+    if change.size().value() > 0
+      @props[modelPropName].set(change.object().value())
   getInitialState: ->
     @props[modelPropName].on 'change sync', (event) =>
       change = event.changed

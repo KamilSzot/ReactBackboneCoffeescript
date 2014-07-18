@@ -4,6 +4,10 @@
 //   php -S localhost:8081 backend.php
 //
 
+function l($val) {
+  file_put_contents("php://stdout", print_r($val, 1)."\n");
+}
+
 session_start();    
 
 header("Access-Control-Allow-Origin: http://localhost:8080");
@@ -21,19 +25,26 @@ if(!isset($_SESSION['tasks'])) {
         ];  
 }  
 $tasks =& $_SESSION['tasks'];
+$url = $_SERVER['PATH_INFO'];
+preg_match('`(^/[^/]+)(.*)`', $url, $m);
+$route = $m[1];
+$url = $m[2];
 
     
-    switch($_SERVER['PATH_INFO']) {
+    switch($route) {
   case '/task':
     switch($_SERVER['REQUEST_METHOD']) {
       case 'GET':
         echo json_encode($tasks);
       break;
+      case 'PUT':
+        l($url);
+      break;
       case 'POST':
         $task = json_decode(file_get_contents("php://input"), true);
         $task['id'] = count($tasks) + 1;
         $tasks[] = $task;
-        file_put_contents("php://stderr", print_r($tasks, 1));
+//         l($tasks);
         echo json_encode($task);
       break;
     }
