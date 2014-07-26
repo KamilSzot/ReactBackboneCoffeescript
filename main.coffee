@@ -203,6 +203,8 @@ TasksCollection = Backbone.Collection.extend
   initialize: ->
     @on 'add', (model) ->
       model.save()
+    @on 'remove', (model) ->
+      model.destroy()
     
     
 

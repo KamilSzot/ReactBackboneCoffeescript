@@ -11,7 +11,7 @@ function l($val) {
 session_start();    
 
 header("Access-Control-Allow-Origin: http://localhost:8080");
-header("Access-Control-Allow-Methods: GET,PUT");
+header("Access-Control-Allow-Methods: GET,PUT,DELETE,POST");
 header("Access-Control-Allow-Headers: Content-Type");
 header("Access-Control-Allow-Credentials: true");
 
@@ -38,7 +38,25 @@ $url = $m[2];
         echo json_encode($tasks);
       break;
       case 'PUT':
-        l($url);
+        $id = 0+substr($url, 1);
+        foreach($tasks as $i => &$task) {
+          if($task['id'] == $id) {
+            $task['description'] = $_POST['description'];
+            break;
+          }
+        }
+        echo json_encode($tasks);
+      break;
+      case 'DELETE':
+        $id = 0+substr($url, 1);
+        foreach($tasks as $i => $task) {
+          if($task['id'] == $id) {
+            array_splice($tasks, $i, 1);
+            l("Deleted id: $id, pos: $i");
+            break;
+          }
+        }
+        echo json_encode($tasks);
       break;
       case 'POST':
         $task = json_decode(file_get_contents("php://input"), true);
