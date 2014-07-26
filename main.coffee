@@ -52,22 +52,24 @@ pair = (key, value)->
   
     
 BackboneModel = (modelPropName) ->
-  componentDidUpdate: (prevProps, prevState) ->
-    change = _.chain(@state[modelPropName])
-      .pairs()
-      .reject(([key, value]) => prevState[modelPropName][key] == value)
-      .filter(([key, value]) => key of @props[modelPropName].attributes)
-    if change.size().value() > 0
-      @props[modelPropName].set(change.object().value())
+#   componentDidUpdate: (prevProps, prevState) ->
+#     change = _.chain(@state[modelPropName])
+#       .pairs()
+#       .reject(([key, value]) => prevState[modelPropName][key] == value)
+#       .filter(([key, value]) => key of @props[modelPropName].attributes)
+#     if change.size().value() > 0
+#       @props[modelPropName].set(change.object().value())
   getInitialState: ->
     @props[modelPropName].on 'change sync', (event) =>
-      change = event.changed
-      change = _.chain(event.changed).pairs().reject(([key, value]) =>
-        event._previousAttributes[key] == value
-      )
-      if change.size().value() > 0
-        @setState pair modelPropName, _.extend(@state[modelPropName], change.object().value()) 
-    pair modelPropName, @props[modelPropName].attributes
+      if @isMounted()
+        @forceUpdate()
+#       change = event.changed
+#       change = _.chain(event.changed).pairs().reject(([key, value]) =>
+#         event._previousAttributes[key] == value
+#       )
+#       if change.size().value() > 0
+#         @setState pair modelPropName, _.extend(@state[modelPropName], change.object().value()) 
+#     pair modelPropName, @props[modelPropName].attributes
         
 BackboneCollection = (modelPropName) ->
   getInitialState: ->
@@ -83,6 +85,7 @@ Task = React.createClass
   getInitialState: ->
     edited: false
   remove: ->
+    @props.task.destroy();
     @props.onRemove && @props.onRemove(@props.task)
   edit: ->
     @setState { edited: _.clone(@props.task.attributes) }, => @refs.description.getDOMNode().focus()
@@ -97,25 +100,23 @@ Task = React.createClass
       @cancel()
   save: ->
     @props.onEdited && @props.onEdited(@props.task, @state.edited)
-    @setState _.extend { task: @state.edited, edited: false }
+    @props.task.set('description', @state.edited.description);
+    @props.task.save();
+    @setState { edited: false }
   cancel: ->
     @setState { edited: false }
   render: ->
-#     console.log @state
     li {}, 
       if @state.edited
-        span {}, (if @state.task.important then "[*]"),
+        span {}, (if @props.task.get('important') then "[*]"),
           ButtonGlyph { onClick: @save, glyph: 'ok'}
           ButtonGlyph { onClick: @cancel, glyph: 'remove' }
           input { ref: "description", value: @state.edited.description, onChange: @descriptionChanged, onKeyDown: @keyDown }
       else
-        span {}, (if @state.task.important then "[*]"),
+        span {}, (if @props.task.get('important') then "[*]"),
           ButtonGlyph { onClick: @remove, glyph: 'trash' }
           ButtonGlyph { onClick: @edit, glyph: 'pencil' }
-          span {}, @state.task.description + " ::: " 
           span {}, @props.task.get('description')  
-#           pre {}, JSON.stringify(@props.task.attributes)
-#           pre {}, JSON.stringify(@state.task)
    
 TaskList = React.createClass
   mixins: [ BackboneCollection('tasks') ]      
@@ -145,53 +146,35 @@ TaskList = React.createClass
 App = React.createClass
   getInitialState: ->
     { unrelated: true }
+  deleteAll: ->
+    $.get('http://localhost:8081/clear')
   render: ->
     div {}, 
       Navbar {}, [
-        h1 {}, "Worklog"
+        h1 {}, "Worklog",
+        Button { className: 'pull-right', onClick: @deleteAll }, "Delete all"
       ]
       div { className: "container" },
         TaskList { tasks: @props.model }
-#         div { }, ":" + @state.unrelated + ":" + @state.text
-#       button { onClick: @props.model.fetch.bind(@props.model, undefined, undefined) }, "refresh"
       
-
-# models = {}
-# 
-# models.Task = Backbone.Model.extend {
-#   defaults: ->
-#     description: "[empty]"
-# }
-# 
-# models.Tasks = Backbone.Collection.extend {
-#   model: models.Task,
-#   url: 'http://localhost:8081/backend.php?all'
-# }
-# 
-# 
-# tasksAll = new models.Tasks();
-# tasksAll.url = 'http://localhost:8081/backend.php?all'
 
 TaskModel = Backbone.Model.extend 
   urlRoot: 'http://localhost:8081/task'
   description: ""
+  important: false
 #   initialize: -> 
 #     @on 'change', -> 
 #       @save()
 
 
+# CORS
 default_Backbone_Sync = Backbone.sync;
 Backbone.sync = (method, model, options) ->
     options ||= {}
-
     if !options.crossDomain
       options.crossDomain = true;
-    
-
     if !options.xhrFields
       options.xhrFields = {withCredentials:true}
-    
-
     default_Backbone_Sync method, model, options
   
 
@@ -203,8 +186,6 @@ TasksCollection = Backbone.Collection.extend
   initialize: ->
     @on 'add', (model) ->
       model.save()
-    @on 'remove', (model) ->
-      model.destroy()
     
     
 
@@ -214,11 +195,9 @@ tasksCollection = new TasksCollection [
 
 
 
-tasksCollection.fetch().done ->
+tasksCollection.fetch(reset: true).done ->
 #   tasksCollection.models[0].set({ description: "TesT" });
 #   tasksCollection.models[0].save();
-
-
 
   React.renderComponent App( model: tasksCollection ), document.body 
 

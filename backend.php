@@ -31,17 +31,22 @@ $route = $m[1];
 $url = $m[2];
 
     
-    switch($route) {
+switch($route) {
+  case '/clear':
+    $tasks = [];
+    echo json_encode(["status" => "ok"]);
+  break;
   case '/task':
     switch($_SERVER['REQUEST_METHOD']) {
       case 'GET':
         echo json_encode($tasks);
       break;
       case 'PUT':
+        $taskChanged = json_decode(file_get_contents("php://input"), true);
         $id = 0+substr($url, 1);
         foreach($tasks as $i => &$task) {
           if($task['id'] == $id) {
-            $task['description'] = $_POST['description'];
+            $task = $taskChanged;
             break;
           }
         }
