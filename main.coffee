@@ -159,7 +159,7 @@ App = React.createClass
       
 
 TaskModel = Backbone.Model.extend 
-  urlRoot: 'http://localhost:8081/task'
+  urlRoot: 'http://localhost:3000/worklog/task'
   description: ""
   important: false
 #   initialize: -> 
@@ -182,7 +182,7 @@ Backbone.sync = (method, model, options) ->
 
 TasksCollection = Backbone.Collection.extend
   model: TaskModel
-  url: 'http://localhost:8081/task' 
+  url: 'http://localhost:3000/worklog/task' 
   initialize: ->
     @on 'add', (model) ->
       model.save()

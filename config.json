@@ -1,0 +1,18 @@
+{
+	"db": {
+		"port": 27017,
+		"host": "localhost"
+	},
+	"server": {
+		"port": 3000,
+		"address": "0.0.0.0"
+	},
+	"accessControl": {
+		"allowOrigin": "http://localhost:8080",
+    "allowMethods": "GET,POST,PUT,DELETE,HEAD,OPTIONS",
+    "allowCredentials": true
+	},
+	"flavor": "nounderscore",
+	"debug": true,
+	"humanReadableOutput": true
+}

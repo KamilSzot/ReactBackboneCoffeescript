@@ -20,6 +20,7 @@
     "gulp-util": "^2.2.20",
     "less": "^1.7.3",
     "main-bower-files": "^1.0.0",
+    "mongodb-rest": "git://github.com/KamilSzot/mongodb-rest.git#Allow_for_Access-Control-Allow-Credentials_header",
     "rimraf": "^2.2.8"
   }
 }
