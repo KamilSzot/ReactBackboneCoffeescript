@@ -1,7 +1,11 @@
-express 		= require 'express'
+express     = require 'express'
+session     = require 'express-session'
 Q 					= require 'q'
 xxhash  		= require 'xxhash'
 bodyParser 	= require 'body-parser'
+
+passport    = require 'passport'
+GoogleStrategy = require('passport-google').Strategy
 
 mongo   = require 'mongodb'
 BSON = mongo.BSONPure;
@@ -34,10 +38,27 @@ db.open (err,db) ->
 
 
   
+
+  
 setupServer = -> 
 
   app = express()
-  app.use bodyParser.json() 
+  app.use bodyParser.json()
+  app.use session({ secret: "dsfdfsdfsbcvbcvb" })
+  app.use passport.initialize()
+  app.use passport.session()
+  
+
+  # Redirect the user to Google for authentication.  When complete, Google
+  # will redirect the user back to the application at
+  #     /auth/google/return
+  app.get '/auth/google', passport.authenticate('google')
+
+  # Google will redirect the user to this URL after authentication.  Finish
+  # the process by verifying the assertion.  If valid, the user will be
+  # logged in.  Otherwise, authentication has failed.
+  app.get '/auth/google/return', passport.authenticate('google', { successRedirect: 'http://localhost:8080/', failureRedirect: 'http://localhost:8080/#failed' })    
+
 
   handleError = (err, res) ->
     if err
@@ -67,6 +88,26 @@ setupServer = ->
       Q.ninvoke db, "collection", collection
         .then (col) -> Q.ninvoke col, "drop"
     
+  passport.use new GoogleStrategy {
+      returnURL: 'http://localhost:3000/auth/google/return',
+      realm: 'http://localhost:3000/'
+  }, (identifier, profile, done) ->
+    l identifier
+    l profile
+    mongo.insert "user", { openId: identifier }
+      .then (user) ->
+        l user
+        done(null, user);
+      .done()
+      
+  passport.serializeUser (user, done) ->
+    done(null, user);
+  
+
+  passport.deserializeUser (user, done) ->
+    done(null, user);
+  
+
   setCORS = (res) ->
     res.set 'Access-Control-Allow-Origin', 'http://localhost:8080'
     res.set 'Access-Control-Allow-Methods', 'GET,PUT,DELETE,POST'
@@ -90,6 +131,13 @@ setupServer = ->
 
   ID = (value) ->
     return new BSON.ObjectID(value)
+
+  app.use /^((?!\/auth).)*$/, (req, res, next) ->
+    l req.user
+    if req.user || req.method == "OPTIONS"
+      next()
+    else
+      res.send(401, 'Unauthorized');
 
   app.post '/clear', (req, res) ->
     respond res, mongoDrop('task') 

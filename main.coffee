@@ -153,6 +153,7 @@ App = React.createClass
       Navbar {}, [
         h1 {}, "Worklog",
         Button { className: 'pull-right', onClick: @deleteAll }, "Delete all"
+        Button { className: 'pull-right', href: "http://localhost:3000/auth/google" }, "Sign In with Google"
       ]
       div { className: "container" },
         TaskList { tasks: @props.model }
@@ -195,11 +196,11 @@ Backbone.sync = (method, model, options) ->
 
 
 
-tasksCollection.fetch(reset: true).done ->
+tasksCollection.fetch(reset: true).always ->
 #   tasksCollection.models[0].set({ description: "TesT" });
 #   tasksCollection.models[0].save();
 
-  React.renderComponent App( model: tasksCollection ), document.body 
+  React.renderComponent App( model: tasksCollection || [] ), document.body 
 
 # FooterModel = Backbone.Model.extend { text: "" }
 # footer = new FooterModel({});
