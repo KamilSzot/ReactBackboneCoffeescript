@@ -8,11 +8,13 @@ Recent changes:
 
 Toy PHP backend was obsoleted. 
 
-To start backend (http://localhost:3000/) you need to have mongodb installed and do:
+New backend was implemented as express.js web app.
+
+To start backend (http://localhost:3000/) you need to have mongodb and cofeescript installed on your machine and do:
 
 	npm install
-	node node_modules/mongodb-rest/bin/mongodb-rest
-
+	cd backend
+	supervisor -x coffee --watch backend.coffee -- backend.coffee
 
 To start serving frontend (http://localhost:8080/) you need to do:
 

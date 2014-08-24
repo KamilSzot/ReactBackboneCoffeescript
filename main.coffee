@@ -13,7 +13,6 @@ ButtonGlyph = React.createClass
     addCssClass @props, ["glyphicon", "glyphicon-"+@props.glyph]
     button @props
 
-      
 TaskCreator = React.createClass
   getInitialState: ->
     description: ""
@@ -106,7 +105,7 @@ Task = React.createClass
   cancel: ->
     @setState { edited: false }
   render: ->
-    li {}, 
+    li {  }, 
       if @state.edited
         span {}, (if @props.task.get('important') then "[*]"),
           ButtonGlyph { onClick: @save, glyph: 'ok'}
@@ -147,7 +146,8 @@ App = React.createClass
   getInitialState: ->
     { unrelated: true }
   deleteAll: ->
-    $.get('http://localhost:8081/clear')
+    $.post('http://localhost:3000/clear')
+    @props.model.reset();
   render: ->
     div {}, 
       Navbar {}, [
@@ -159,13 +159,26 @@ App = React.createClass
       
 
 TaskModel = Backbone.Model.extend 
-  urlRoot: 'http://localhost:3000/worklog/task'
+  urlRoot: 'http://localhost:3000/task'
+  idAttribute: '_id'
   description: ""
   important: false
 #   initialize: -> 
 #     @on 'change', -> 
 #       @save()
 
+
+
+TasksCollection = Backbone.Collection.extend
+  model: TaskModel
+  url: 'http://localhost:3000/task' 
+  initialize: ->
+    @on 'add', (model) ->
+      model.save()
+    
+    
+
+tasksCollection = new TasksCollection []
 
 # CORS
 default_Backbone_Sync = Backbone.sync;
@@ -179,19 +192,6 @@ Backbone.sync = (method, model, options) ->
   
 
       
-
-TasksCollection = Backbone.Collection.extend
-  model: TaskModel
-  url: 'http://localhost:3000/worklog/task' 
-  initialize: ->
-    @on 'add', (model) ->
-      model.save()
-    
-    
-
-tasksCollection = new TasksCollection [ 
-]
-
 
 
 
