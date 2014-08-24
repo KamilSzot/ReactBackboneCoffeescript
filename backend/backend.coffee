@@ -44,65 +44,27 @@ setupServer = ->
       true
 
   mongoQuery = (collection, query) ->
-    dfd = Q.defer()
-    db.collection collection, (err, collection) ->
-      dfd.reject err if err
-      collection.find query, (err, cursor) ->
-        dfd.reject err if err
-        cursor.toArray (err, docs) ->
-          dfd.reject err if err
-
-          dfd.resolve docs
-
-    dfd.promise
-    
+    Q.ninvoke db, "collection", collection
+      .then (col) -> Q.ninvoke col, "find", query
+      .then (cursor) -> Q.ninvoke cursor, "toArray"
     
   mongoRemove = (collection, query) ->
-    dfd = Q.defer()
-    db.collection collection, (err, collection) ->
-      dfd.reject err if err
-      collection.remove query, { single: true }, (err) ->
-        dfd.reject err if err
-        
-        dfd.resolve {}
-
-    dfd.promise
+    Q.ninvoke db, "collection", collection
+      .then (col) -> Q.ninvoke col, "remove", query, { single: true }
     
   mongoUpdate = (collection, query, data) ->
     delete data._id;
-    
-    dfd = Q.defer()
-    db.collection collection, (err, collection) ->
-      dfd.reject err if err
-      collection.update query, data, (err) ->
-        dfd.reject err if err
-        
-        dfd.resolve {}
-
-    dfd.promise
+    Q.ninvoke db, "collection", collection
+      .then (col) -> Q.ninvoke col, "update", query, data
     
   mongoInsert = (collection, data) ->
-    dfd = Q.defer()
-    db.collection collection, (err, collection) ->
-      dfd.reject err if err
-      collection.insert data, (err, docs) ->
-        dfd.reject err if err
-
-        dfd.resolve docs[0]
-
-    dfd.promise
-    
+    Q.ninvoke db, "collection", collection
+      .then (col) -> Q.ninvoke col, "insert", data
+      .then (docs) -> docs[0]
     
   mongoDrop = (collection) ->
-    dfd = Q.defer()
-    db.collection collection, (err, collection) ->
-      dfd.reject err if err
-      collection.drop (err) ->
-        dfd.reject err if err
-        
-        dfd.resolve {}
-
-    dfd.promise
+    Q.ninvoke db, "collection", collection
+      .then (col) -> Q.ninvoke col, "drop"
     
   app.options '*', (req, res) ->
     setCORS res
