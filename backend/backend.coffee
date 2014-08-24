@@ -43,33 +43,30 @@ setupServer = ->
     if err
       true
 
-  mongoQuery = (collection, query) ->
-    Q.ninvoke db, "collection", collection
-      .then (col) -> Q.ninvoke col, "find", query
-      .then (cursor) -> Q.ninvoke cursor, "toArray"
+  mongo =
+    query: (collection, query) ->
+      Q.ninvoke db, "collection", collection
+        .then (col) -> Q.ninvoke col, "find", query
+        .then (cursor) -> Q.ninvoke cursor, "toArray"
+      
+    remove: (collection, query) ->
+      Q.ninvoke db, "collection", collection
+        .then (col) -> Q.ninvoke col, "remove", query, { single: true }
+      
+    update: (collection, query, data) ->
+      delete data._id;
+      Q.ninvoke db, "collection", collection
+        .then (col) -> Q.ninvoke col, "update", query, data
+      
+    insert: (collection, data) ->
+      Q.ninvoke db, "collection", collection
+        .then (col) -> Q.ninvoke col, "insert", data
+        .then (docs) -> docs[0]
+      
+    drop: (collection) ->
+      Q.ninvoke db, "collection", collection
+        .then (col) -> Q.ninvoke col, "drop"
     
-  mongoRemove = (collection, query) ->
-    Q.ninvoke db, "collection", collection
-      .then (col) -> Q.ninvoke col, "remove", query, { single: true }
-    
-  mongoUpdate = (collection, query, data) ->
-    delete data._id;
-    Q.ninvoke db, "collection", collection
-      .then (col) -> Q.ninvoke col, "update", query, data
-    
-  mongoInsert = (collection, data) ->
-    Q.ninvoke db, "collection", collection
-      .then (col) -> Q.ninvoke col, "insert", data
-      .then (docs) -> docs[0]
-    
-  mongoDrop = (collection) ->
-    Q.ninvoke db, "collection", collection
-      .then (col) -> Q.ninvoke col, "drop"
-    
-  app.options '*', (req, res) ->
-    setCORS res
-    res.send ""
-
   setCORS = (res) ->
     res.set 'Access-Control-Allow-Origin', 'http://localhost:8080'
     res.set 'Access-Control-Allow-Methods', 'GET,PUT,DELETE,POST'
@@ -91,26 +88,32 @@ setupServer = ->
         setCORS res
         res.status(500).send({ message: err.err || err.errmsg })
 
+  ID = (value) ->
+    return new BSON.ObjectID(value)
+
   app.post '/clear', (req, res) ->
     respond res, mongoDrop('task') 
     
   app.route '/:collection/:id'
     .get (req, res) -> 
-      respond res, mongoQuery req.params.collection, {'_id': new BSON.ObjectID(req.params.id)}
-    .put (req, res) -> 
-      respond res, mongoUpdate req.params.collection, {'_id': new BSON.ObjectID(req.params.id)}, req.body
+      respond res, mongo.query  req.params.collection, { _id: ID(req.params.id) }
     .delete (req, res) -> 
-      respond res, mongoRemove req.params.collection, {'_id': new BSON.ObjectID(req.params.id)}
+      respond res, mongo.remove req.params.collection, { _id: ID(req.params.id) }
+    .put (req, res) -> 
+      respond res, mongo.update req.params.collection, { _id: ID(req.params.id) }, req.body
 
   app.route '/:collection'
-    .get (req, res) -> 
-      respond res, mongoQuery req.params.collection, {}
     .post (req, res) -> 
-      respond res, mongoInsert req.params.collection, req.body
+      respond res, mongo.insert req.params.collection, req.body
+    .get (req, res) -> 
+      respond res, mongo.query  req.params.collection, {}
 
-
+  app.options '*', (req, res) ->
+    setCORS res
+    res.send ""
 
   app.get '/', (req, res) ->
     res.send 'ok'
+
 
   app.listen 3000
