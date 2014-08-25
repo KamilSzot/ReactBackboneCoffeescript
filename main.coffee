@@ -152,8 +152,11 @@ App = React.createClass
     div {}, 
       Navbar {}, [
         h1 {}, "Worklog",
-        Button { className: 'pull-right', onClick: @deleteAll }, "Delete all"
-        Button { className: 'pull-right', href: "http://localhost:3000/auth/google" }, "Sign In with Google"
+          div { className: 'pull-right' }, [
+            Button { onClick: @deleteAll }, "Delete all"
+            Button { href: "http://localhost:3000/auth/google" }, "Log in (via Google)"
+            Button { href: "http://localhost:3000/auth/google/logout" }, "Log out"
+          ]
       ]
       div { className: "container" },
         TaskList { tasks: @props.model }

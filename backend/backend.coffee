@@ -1,19 +1,34 @@
 express     = require 'express'
 session     = require 'express-session'
-Q 					= require 'q'
-xxhash  		= require 'xxhash'
-bodyParser 	= require 'body-parser'
-
+Q           = require 'q'
+xxhash      = require 'xxhash'
+bodyParser  = require 'body-parser'
 passport    = require 'passport'
+util        = require 'util'
+
+mongoSessionStore = require 'connect-mongodb'
+
 GoogleStrategy = require('passport-google').Strategy
+
 
 mongo   = require 'mongodb'
 BSON = mongo.BSONPure;
 
-l = console.log.bind console
+l = (msg) -> 
+  console.log util.inspect(msg) + "\n" + ((new Error).stack.split "\n")[2]
+  
 
 
 config = 
+  url:
+    backend:    'http://localhost:3000'
+    frontend:   'http://localhost:8080'
+    
+    home:       '/'
+      
+    auth:       '/auth/google'
+    authReturn: '/auth/google/return'
+    logout:     '/auth/logout'
   db:
     host: 'localhost'
     port: 27017
@@ -28,6 +43,7 @@ dbParams =
 
 
 db = new mongo.Db(config.db.name, new mongo.Server(config.db.host, config.db.port, serverParams), dbParams)
+
 db.open (err,db) ->
   if err
     console.error "Can't connect!"
@@ -39,62 +55,60 @@ db.open (err,db) ->
 
   
 
+mongo =
+  query: (collection, query) ->
+    Q.ninvoke db, "collection", collection
+      .then (col) -> Q.ninvoke col, "find", query, { sort: [['order', 1]] }
+      .then (cursor) -> Q.ninvoke cursor, "toArray"
+    
+  remove: (collection, query) ->
+    Q.ninvoke db, "collection", collection
+      .then (col) -> Q.ninvoke col, "remove", query, { single: true }
+    
+  update: (collection, query, data) ->
+    delete data._id;
+    Q.ninvoke db, "collection", collection
+      .then (col) -> Q.ninvoke col, "update", query, data
+    
+  insert: (collection, data) ->
+    Q.ninvoke db, "collection", collection
+      .then (col) -> Q.ninvoke col, "insert", data
+      .then (docs) -> docs[0]
+    
+  drop: (collection) ->
+    Q.ninvoke db, "collection", collection
+      .then (col) -> Q.ninvoke col, "drop"      
+
+  upsert: (collection, query, update) ->
+    Q.ninvoke db, "collection", collection
+      .then (col) -> Q.ninvoke col, "findAndModify", query, [['_id', 1]], update, { upsert: true, new: true }
+        .then ([doc, fullResult]) -> doc # findAndModify passes fullResult to its callback as last parameter on success
   
 setupServer = -> 
 
   app = express()
   app.use bodyParser.json()
-  app.use session({ secret: "dsfdfsdfsbcvbcvb" })
+  
+  app.use session
+    secret: "dsfdfsdfsbcvbcvb###@$3423adsad"
+    saveUninitialized: true
+    resave: true
+    store: new mongoSessionStore { db: db }
+
   app.use passport.initialize()
   app.use passport.session()
   
+  app.get config.url.auth, passport.authenticate('google')
+  app.get config.url.authReturn, passport.authenticate('google', { 
+    successRedirect: config.url.frontend + config.url.home
+    failureRedirect: config.url.frontend + config.url.home 
+  })    
 
-  # Redirect the user to Google for authentication.  When complete, Google
-  # will redirect the user back to the application at
-  #     /auth/google/return
-  app.get '/auth/google', passport.authenticate('google')
-
-  # Google will redirect the user to this URL after authentication.  Finish
-  # the process by verifying the assertion.  If valid, the user will be
-  # logged in.  Otherwise, authentication has failed.
-  app.get '/auth/google/return', passport.authenticate('google', { successRedirect: 'http://localhost:8080/', failureRedirect: 'http://localhost:8080/#failed' })    
-
-
-  handleError = (err, res) ->
-    if err
-      true
-
-  mongo =
-    query: (collection, query) ->
-      Q.ninvoke db, "collection", collection
-        .then (col) -> Q.ninvoke col, "find", query
-        .then (cursor) -> Q.ninvoke cursor, "toArray"
-      
-    remove: (collection, query) ->
-      Q.ninvoke db, "collection", collection
-        .then (col) -> Q.ninvoke col, "remove", query, { single: true }
-      
-    update: (collection, query, data) ->
-      delete data._id;
-      Q.ninvoke db, "collection", collection
-        .then (col) -> Q.ninvoke col, "update", query, data
-      
-    insert: (collection, data) ->
-      Q.ninvoke db, "collection", collection
-        .then (col) -> Q.ninvoke col, "insert", data
-        .then (docs) -> docs[0]
-      
-    drop: (collection) ->
-      Q.ninvoke db, "collection", collection
-        .then (col) -> Q.ninvoke col, "drop"
-    
   passport.use new GoogleStrategy {
-      returnURL: 'http://localhost:3000/auth/google/return',
-      realm: 'http://localhost:3000/'
+      returnURL: config.url.backend + config.url.authReturn
+      realm: config.url.backend
   }, (identifier, profile, done) ->
-    l identifier
-    l profile
-    mongo.insert "user", { openId: identifier }
+    mongo.upsert "user", { openId: identifier }, { $set: profile }
       .then (user) ->
         l user
         done(null, user);
@@ -103,7 +117,6 @@ setupServer = ->
   passport.serializeUser (user, done) ->
     done(null, user);
   
-
   passport.deserializeUser (user, done) ->
     done(null, user);
   
@@ -133,12 +146,15 @@ setupServer = ->
     return new BSON.ObjectID(value)
 
   app.use /^((?!\/auth).)*$/, (req, res, next) ->
-    l req.user
     if req.user || req.method == "OPTIONS"
       next()
     else
-      res.send(401, 'Unauthorized');
+      res.status(401).send('Unauthorized');
 
+  app.get '/auth/google/logout', (req, res) ->
+    req.logout();
+    res.redirect("http://localhost:8080");
+    
   app.post '/clear', (req, res) ->
     respond res, mongoDrop('task') 
     
@@ -152,7 +168,9 @@ setupServer = ->
 
   app.route '/:collection'
     .post (req, res) -> 
-      respond res, mongo.insert req.params.collection, req.body
+      mongo.upsert "sequence", { name: req.params.collection }, { $inc: { lastOrder: 1 } }
+        .then (r) ->
+          respond res, mongo.insert req.params.collection, util._extend(req.body, { order: r.lastOrder })
     .get (req, res) -> 
       respond res, mongo.query  req.params.collection, {}
 
