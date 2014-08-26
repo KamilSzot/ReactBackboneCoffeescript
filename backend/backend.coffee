@@ -149,6 +149,7 @@ setupServer = ->
     if req.user || req.method == "OPTIONS"
       next()
     else
+      setCORS res
       res.status(401).send('Unauthorized');
 
   app.get '/auth/google/logout', (req, res) ->

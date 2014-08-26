@@ -197,7 +197,9 @@ Backbone.sync = (method, model, options) ->
 
       
 
-
+$(document).ajaxError (event, jqXHR, settings, thrownError) ->
+  if jqXHR.status == 401
+    window.location.href = 'http://localhost:3000/auth/google';
 
 tasksCollection.fetch(reset: true).always ->
 #   tasksCollection.models[0].set({ description: "TesT" });
