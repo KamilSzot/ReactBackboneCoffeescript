@@ -40,8 +40,6 @@ serverParams =
 dbParams = 
   w: 1 # Default write concern.
 
-
-
 db = new mongo.Db(config.db.name, new mongo.Server(config.db.host, config.db.port, serverParams), dbParams)
 
 db.open (err,db) ->
@@ -51,9 +49,6 @@ db.open (err,db) ->
     if err
       console.error "Can't authenticate!"
     setupServer()
-
-
-  
 
 mongo =
   query: (collection, query) ->
@@ -83,9 +78,9 @@ mongo =
     Q.ninvoke db, "collection", collection
       .then (col) -> Q.ninvoke col, "findAndModify", query, [['_id', 1]], update, { upsert: true, new: true }
         .then ([doc, fullResult]) -> doc # findAndModify passes fullResult to its callback as last parameter on success
-  
-setupServer = -> 
 
+
+setupServer = -> 
   app = express()
   app.use bodyParser.json()
   
