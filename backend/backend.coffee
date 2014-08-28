@@ -105,7 +105,6 @@ setupServer = ->
   }, (identifier, profile, done) ->
     mongo.upsert "user", { openId: identifier }, { $set: profile }
       .then (user) ->
-        l user
         done(null, user);
       .done()
       
@@ -117,7 +116,7 @@ setupServer = ->
   
 
   setCORS = (res) ->
-    res.set 'Access-Control-Allow-Origin', 'http://localhost:8080'
+    res.set 'Access-Control-Allow-Origin', config.url.frontend
     res.set 'Access-Control-Allow-Methods', 'GET,PUT,DELETE,POST'
     res.set 'Access-Control-Allow-Headers', 'Content-Type'
     res.set 'Access-Control-Allow-Credentials', 'true'
@@ -125,7 +124,8 @@ setupServer = ->
   respond = (res, promise) ->
     promise
       .then (result) ->
-        responseText = new Buffer(JSON.stringify(result), 'utf-8')
+        l typeof result
+        responseText = new Buffer(JSON.stringify(result || null), 'utf-8')
         res.set 'ETag', xxhash.hash(responseText, 0xCAFEBABE)
         res.set 'Content-Type', 'application/json'
         
@@ -134,13 +134,14 @@ setupServer = ->
         res.send responseText
         
       .catch (err) ->
+        console.log err.stack
         setCORS res
         res.status(500).send({ message: err.err || err.errmsg })
 
   ID = (value) ->
     return new BSON.ObjectID(value)
 
-  app.use /^((?!\/auth).)*$/, (req, res, next) ->
+  app.use /^((?!\/auth|\/user).)*$/, (req, res, next) ->
     if req.user || req.method == "OPTIONS"
       next()
     else
@@ -149,11 +150,15 @@ setupServer = ->
 
   app.get '/auth/google/logout', (req, res) ->
     req.logout();
-    res.redirect("http://localhost:8080");
+    res.redirect config.url.frontend
     
   app.post '/clear', (req, res) ->
     respond res, mongoDrop('task') 
     
+  app.route '/user/me'
+    .get (req, res) ->
+      respond res, Q.when(req.user)
+      
   app.route '/:collection/:id'
     .get (req, res) -> 
       respond res, mongo.query  req.params.collection, { _id: ID(req.params.id) }

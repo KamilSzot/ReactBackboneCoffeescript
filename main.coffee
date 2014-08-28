@@ -181,6 +181,11 @@ TasksCollection = Backbone.Collection.extend
       model.save()
     
     
+User = Backbone.Model.extend 
+  urlRoot: 'http://localhost:3000/user'
+  idAttribute: '_id'
+
+
 
 tasksCollection = new TasksCollection []
 
@@ -197,31 +202,16 @@ Backbone.sync = (method, model, options) ->
 
       
 
-$(document).ajaxError (event, jqXHR, settings, thrownError) ->
-  if jqXHR.status == 401
-    window.location.href = 'http://localhost:3000/auth/google';
+$(document)
+  .ajaxError (event, jqXHR, settings, thrownError) ->
+    if jqXHR.status == 401
+      window.location.href = 'http://localhost:3000/auth/google';
 
-tasksCollection.fetch(reset: true).always ->
-#   tasksCollection.models[0].set({ description: "TesT" });
-#   tasksCollection.models[0].save();
-
-  React.renderComponent App( model: tasksCollection || [] ), document.body 
-
-# FooterModel = Backbone.Model.extend { text: "" }
-# footer = new FooterModel({});
-# footer.url = 'http://localhost:8081/backend.php?footer'
-# footer.fetch
-#   success: ->
-
-# tasksAll.fetch 
-#   success: -> { model: tasksAll }
-#     React.renderComponent App( model: footer ), document.body 
-
-# setInterval(footer.fetch.bind(footer), 500)
-
-
-
-
-
+  .ready ->
+    me = new User({ _id: 'me' });
+    me.fetch()
+    
+    tasksCollection.fetch(reset: true).always ->
+      React.renderComponent App( model: tasksCollection || [] ), document.body 
 
 
