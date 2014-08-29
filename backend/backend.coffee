@@ -14,18 +14,18 @@ GoogleStrategy = require('passport-google').Strategy
 mongo   = require 'mongodb'
 BSON = mongo.BSONPure;
 
-l = (msg) -> 
+l = (msg) ->
   console.log util.inspect(msg) + "\n" + ((new Error).stack.split "\n")[2]
-  
 
 
-config = 
+
+config =
   url:
     backend:    'http://localhost:3000'
     frontend:   'http://localhost:8080'
-    
+
     home:       '/'
-      
+
     auth:       '/auth/google'
     authReturn: '/auth/google/return'
     logout:     '/auth/logout'
@@ -33,11 +33,11 @@ config =
     host: 'localhost'
     port: 27017
     name: 'worklog'
-    
-serverParams = 
+
+serverParams =
   auto_reconnect: true
 
-dbParams = 
+dbParams =
   w: 1 # Default write concern.
 
 db = new mongo.Db(config.db.name, new mongo.Server(config.db.host, config.db.port, serverParams), dbParams)
@@ -55,24 +55,24 @@ mongo =
     Q.ninvoke db, "collection", collection
       .then (col) -> Q.ninvoke col, "find", query, { sort: [['order', 1]] }
       .then (cursor) -> Q.ninvoke cursor, "toArray"
-    
+
   remove: (collection, query) ->
     Q.ninvoke db, "collection", collection
       .then (col) -> Q.ninvoke col, "remove", query, { single: true }
-    
+
   update: (collection, query, data) ->
     delete data._id;
     Q.ninvoke db, "collection", collection
       .then (col) -> Q.ninvoke col, "update", query, data
-    
+
   insert: (collection, data) ->
     Q.ninvoke db, "collection", collection
       .then (col) -> Q.ninvoke col, "insert", data
       .then (docs) -> docs[0]
-    
+
   drop: (collection) ->
     Q.ninvoke db, "collection", collection
-      .then (col) -> Q.ninvoke col, "drop"      
+      .then (col) -> Q.ninvoke col, "drop"
 
   upsert: (collection, query, update) ->
     Q.ninvoke db, "collection", collection
@@ -80,10 +80,10 @@ mongo =
         .then ([doc, fullResult]) -> doc # findAndModify passes fullResult to its callback as last parameter on success
 
 
-setupServer = -> 
+setupServer = ->
   app = express()
   app.use bodyParser.json()
-  
+
   app.use session
     secret: "dsfdfsdfsbcvbcvb###@$3423adsad"
     saveUninitialized: true
@@ -92,12 +92,12 @@ setupServer = ->
 
   app.use passport.initialize()
   app.use passport.session()
-  
+
   app.get config.url.auth, passport.authenticate('google')
-  app.get config.url.authReturn, passport.authenticate('google', { 
+  app.get config.url.authReturn, passport.authenticate('google', {
     successRedirect: config.url.frontend + config.url.home
-    failureRedirect: config.url.frontend + config.url.home 
-  })    
+    failureRedirect: config.url.frontend + config.url.home
+  })
 
   passport.use new GoogleStrategy {
       returnURL: config.url.backend + config.url.authReturn
@@ -107,20 +107,20 @@ setupServer = ->
       .then (user) ->
         done(null, user);
       .done()
-      
+
   passport.serializeUser (user, done) ->
     done(null, user);
-  
+
   passport.deserializeUser (user, done) ->
     done(null, user);
-  
+
 
   setCORS = (res) ->
     res.set 'Access-Control-Allow-Origin', config.url.frontend
     res.set 'Access-Control-Allow-Methods', 'GET,PUT,DELETE,POST'
     res.set 'Access-Control-Allow-Headers', 'Content-Type'
     res.set 'Access-Control-Allow-Credentials', 'true'
-    
+
   respond = (res, promise) ->
     promise
       .then (result) ->
@@ -128,11 +128,11 @@ setupServer = ->
         responseText = new Buffer(JSON.stringify(result || null), 'utf-8')
         res.set 'ETag', xxhash.hash(responseText, 0xCAFEBABE)
         res.set 'Content-Type', 'application/json'
-        
+
         setCORS res
-        
+
         res.send responseText
-        
+
       .catch (err) ->
         console.log err.stack
         setCORS res
@@ -151,28 +151,28 @@ setupServer = ->
   app.get '/auth/google/logout', (req, res) ->
     req.logout();
     res.redirect config.url.frontend
-    
+
   app.post '/clear', (req, res) ->
-    respond res, mongoDrop('task') 
-    
+    respond res, mongoDrop('task')
+
   app.route '/user/me'
     .get (req, res) ->
       respond res, Q.when(req.user)
-      
+
   app.route '/:collection/:id'
-    .get (req, res) -> 
+    .get (req, res) ->
       respond res, mongo.query  req.params.collection, { _id: ID(req.params.id) }
-    .delete (req, res) -> 
+    .delete (req, res) ->
       respond res, mongo.remove req.params.collection, { _id: ID(req.params.id) }
-    .put (req, res) -> 
+    .put (req, res) ->
       respond res, mongo.update req.params.collection, { _id: ID(req.params.id) }, req.body
 
   app.route '/:collection'
-    .post (req, res) -> 
+    .post (req, res) ->
       mongo.upsert "sequence", { name: req.params.collection }, { $inc: { lastOrder: 1 } }
         .then (r) ->
           respond res, mongo.insert req.params.collection, util._extend(req.body, { order: r.lastOrder })
-    .get (req, res) -> 
+    .get (req, res) ->
       respond res, mongo.query  req.params.collection, {}
 
   app.options '*', (req, res) ->

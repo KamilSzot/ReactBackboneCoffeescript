@@ -1,10 +1,8 @@
 {pre, h1, div, span, i, input, ul, li, button} = React.DOM
 {Navbar, Button} = ReactBootstrap
 
-
-
 addCssClass = (props, classNamesToAdd) ->
-  if !classNamesToAdd.length 
+  if !classNamesToAdd.length
     classNamesToAdd = [classNamesToAdd]
   props.className = _.uniq((props.className || "").split(/\s+/).concat(classNamesToAdd)).join(" ")
 
@@ -17,39 +15,39 @@ TaskCreator = React.createClass
   getInitialState: ->
     description: ""
   focus: ->
-    @refs.description.getDOMNode().focus()  
+    @refs.description.getDOMNode().focus()
   keyDown: (event) ->
     if event.keyCode == 13
       @createTask()
   descriptionChanged: (event) ->
     @setState({ description: event.target.value })
   createTask: ->
-    if @state.description.trim() 
+    if @state.description.trim()
       @props.onTaskCreated && @props.onTaskCreated({ description: @state.description })
       @setState({ description: "" })
   render: ->
     div { className: "row" },
-      div { className: "col-md-12" }, 
-        input { 
-          ref: "description", 
-          autoFocus: true, 
-          placeholder: "Task description", 
-          className: "col-md-12", 
-          value: @state.description 
-          onChange: @descriptionChanged, 
+      div { className: "col-md-12" },
+        input {
+          ref: "description",
+          autoFocus: true,
+          placeholder: "Task description",
+          className: "col-md-12",
+          value: @state.description
+          onChange: @descriptionChanged,
           onKeyDown: @keyDown
         },
         Button {
           onClick: @createTask
         }, "Add task"
-        
-    
+
+
 pair = (key, value)->
   p = {}
   p[key] = value
   p
-  
-    
+
+
 BackboneModel = (modelPropName) ->
 #   componentDidUpdate: (prevProps, prevState) ->
 #     change = _.chain(@state[modelPropName])
@@ -67,16 +65,16 @@ BackboneModel = (modelPropName) ->
 #         event._previousAttributes[key] == value
 #       )
 #       if change.size().value() > 0
-#         @setState pair modelPropName, _.extend(@state[modelPropName], change.object().value()) 
+#         @setState pair modelPropName, _.extend(@state[modelPropName], change.object().value())
 #     pair modelPropName, @props[modelPropName].attributes
-        
+
 BackboneCollection = (modelPropName) ->
   getInitialState: ->
     @props[modelPropName].on 'add remove reset sort', (event) =>
       if @isMounted()
         @forceUpdate()
-  
-        
+
+
 l = console.log.bind(console)
 
 Task = React.createClass
@@ -89,7 +87,7 @@ Task = React.createClass
   edit: ->
     @setState { edited: _.clone(@props.task.attributes) }, => @refs.description.getDOMNode().focus()
     @props.onEdit && @props.onEdit(@props.task)
-   
+
   descriptionChanged: (event) ->
     @setState { edited: _.extend(@state.edited, { description: event.target.value }) }
   keyDown: (event) ->
@@ -105,7 +103,7 @@ Task = React.createClass
   cancel: ->
     @setState { edited: false }
   render: ->
-    li {  }, 
+    li {  },
       if @state.edited
         span {}, (if @props.task.get('important') then "[*]"),
           ButtonGlyph { onClick: @save, glyph: 'ok'}
@@ -115,10 +113,10 @@ Task = React.createClass
         span {}, (if @props.task.get('important') then "[*]"),
           ButtonGlyph { onClick: @remove, glyph: 'trash' }
           ButtonGlyph { onClick: @edit, glyph: 'pencil' }
-          span {}, @props.task.get('description')  
-   
+          span {}, @props.task.get('description')
+
 TaskList = React.createClass
-  mixins: [ BackboneCollection('tasks') ]      
+  mixins: [ BackboneCollection('tasks') ]
   appendTask: (taskData) ->
     @props.tasks.add(new @props.tasks.model(taskData))
     @refs.taskCreator.focus()
@@ -131,8 +129,8 @@ TaskList = React.createClass
     self = this
     div { className: "panel" },
       div { className: "row" },
-        div { className: "col-md-12" },  
-          ul { }, 
+        div { className: "col-md-12" },
+          ul { },
             for task in @props.tasks.models
               Task { task: task, onRemove: @removedTask, onEdited: @editedTask }
       TaskCreator {
@@ -141,7 +139,7 @@ TaskList = React.createClass
       }
 
 
-        
+
 App = React.createClass
   getInitialState: ->
     { unrelated: true }
@@ -149,7 +147,7 @@ App = React.createClass
     $.post('http://localhost:3000/clear')
     @props.model.reset();
   render: ->
-    div {}, 
+    div {},
       Navbar {}, [
         h1 {}, "Worklog",
           div { className: 'pull-right' }, [
@@ -160,28 +158,28 @@ App = React.createClass
       ]
       div { className: "container" },
         TaskList { tasks: @props.model }
-      
 
-TaskModel = Backbone.Model.extend 
+
+TaskModel = Backbone.Model.extend
   urlRoot: 'http://localhost:3000/task'
   idAttribute: '_id'
   description: ""
   important: false
-#   initialize: -> 
-#     @on 'change', -> 
+#   initialize: ->
+#     @on 'change', ->
 #       @save()
 
 
 
 TasksCollection = Backbone.Collection.extend
   model: TaskModel
-  url: 'http://localhost:3000/task' 
+  url: 'http://localhost:3000/task'
   initialize: ->
     @on 'add', (model) ->
       model.save()
-    
-    
-User = Backbone.Model.extend 
+
+
+User = Backbone.Model.extend
   urlRoot: 'http://localhost:3000/user'
   idAttribute: '_id'
 
@@ -198,9 +196,6 @@ Backbone.sync = (method, model, options) ->
     if !options.xhrFields
       options.xhrFields = {withCredentials:true}
     default_Backbone_Sync method, model, options
-  
-
-      
 
 $(document)
   .ajaxError (event, jqXHR, settings, thrownError) ->
@@ -208,10 +203,7 @@ $(document)
       window.location.href = 'http://localhost:3000/auth/google';
 
   .ready ->
-    me = new User({ _id: 'me' });
+    me = new User({ _id: 'me' })
     me.fetch()
-    
     tasksCollection.fetch(reset: true).always ->
-      React.renderComponent App( model: tasksCollection || [] ), document.body 
-
-
+      React.renderComponent App( model: tasksCollection || [] ), document.body
