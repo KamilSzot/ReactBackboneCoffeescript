@@ -149,7 +149,7 @@ App = React.createClass
   render: ->
     div {},
       Navbar {}, [
-        h1 {}, "Worklog",
+        h1 {}, "Worklog" + (if !@props.me then "" else " : " + @props.me.get('name').givenName + " " + @props.me.get('name').familyName),
           div { className: 'pull-right' }, [
             Button { onClick: @deleteAll }, "Delete all"
             Button { href: "http://localhost:3000/auth/google" }, "Log in (via Google)"
@@ -205,5 +205,8 @@ $(document)
   .ready ->
     me = new User({ _id: 'me' })
     me.fetch()
-    tasksCollection.fetch(reset: true).always ->
-      React.renderComponent App( model: tasksCollection || [] ), document.body
+      .fail ->
+        me = null
+      .always ->
+        tasksCollection.fetch(reset: true).always ->
+          React.renderComponent App( model: tasksCollection || [], me: me ), document.body

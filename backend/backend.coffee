@@ -11,8 +11,10 @@ mongoSessionStore = require 'connect-mongodb'
 GoogleStrategy = require('passport-google').Strategy
 
 
-mongo   = require 'mongodb'
-BSON = mongo.BSONPure;
+mongodb   = require 'mongodb'
+ID = (value) ->
+  return new mongodb.BSONPure.ObjectID(value)
+
 
 l = (msg) ->
   console.log util.inspect(msg) + "\n" + ((new Error).stack.split "\n")[2]
@@ -40,7 +42,7 @@ serverParams =
 dbParams =
   w: 1 # Default write concern.
 
-db = new mongo.Db(config.db.name, new mongo.Server(config.db.host, config.db.port, serverParams), dbParams)
+db = new mongodb.Db(config.db.name, new mongodb.Server(config.db.host, config.db.port, serverParams), dbParams)
 
 db.open (err,db) ->
   if err
@@ -80,6 +82,27 @@ mongo =
         .then ([doc, fullResult]) -> doc # findAndModify passes fullResult to its callback as last parameter on success
 
 
+# class User
+#   Task: class 
+#     constructor: (@user) ->
+#     description: "New"
+#     log: -> l @user
+# 
+#   tasks: (q) ->
+#     a = new @Task
+#     a.log()
+# 
+# 
+# 
+# me = new User
+# me.name = "Me";
+# 
+# you = new User
+# you.name = "You";
+# 
+# me.tasks {a:1}
+# you.tasks {}
+
 setupServer = ->
   app = express()
   app.use bodyParser.json()
@@ -109,10 +132,12 @@ setupServer = ->
       .done()
 
   passport.serializeUser (user, done) ->
-    done(null, user);
+    done(null, user._id);
 
   passport.deserializeUser (user, done) ->
-    done(null, user);
+    mongo.query 'user', { _id: ID(user) }
+      .then (users) -> 
+        done(null, users[0]);
 
 
   setCORS = (res) ->
@@ -124,7 +149,7 @@ setupServer = ->
   respond = (res, promise) ->
     promise
       .then (result) ->
-        l typeof result
+#         l typeof result
         responseText = new Buffer(JSON.stringify(result || null), 'utf-8')
         res.set 'ETag', xxhash.hash(responseText, 0xCAFEBABE)
         res.set 'Content-Type', 'application/json'
@@ -134,12 +159,12 @@ setupServer = ->
         res.send responseText
 
       .catch (err) ->
+        err = err || {}
         console.log err.stack
         setCORS res
-        res.status(500).send({ message: err.err || err.errmsg })
-
-  ID = (value) ->
-    return new BSON.ObjectID(value)
+        res.status(err.status || 500).send({ message: err.err || err.errmsg })
+        
+      .done()
 
   app.use /^((?!\/auth|\/user).)*$/, (req, res, next) ->
     if req.user || req.method == "OPTIONS"
@@ -157,7 +182,12 @@ setupServer = ->
 
   app.route '/user/me'
     .get (req, res) ->
-      respond res, Q.when(req.user)
+      if req.user
+        respond res, Q.when(req.user)
+      else 
+        p = Q.defer()
+        p.reject({ status: 404 })
+        respond res, p.promise
 
   app.route '/:collection/:id'
     .get (req, res) ->
