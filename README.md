@@ -12,6 +12,7 @@ New backend was implemented as express.js web app.
 
 To start backend (http://localhost:3000/) you need to have mongodb and cofeescript installed on your machine and do:
 
+	sudo npm install -g bower supervisor gulp
 	npm install
 	cd backend
 	supervisor -x coffee --watch backend.coffee -- backend.coffee
