@@ -1,11 +1,12 @@
 path = require 'path'
 HtmlWebpackPlugin = require 'html-webpack-plugin'
-
+webpack = require 'webpack'
 module.exports =
-  entry: {
-#    dev: 'webpack/hot/dev-server',
-    main: './main',
-  }
+  entry: [
+      'webpack-dev-server/client?http://localhost:3000',
+      'webpack/hot/only-dev-server',
+      './main'
+  ]
   output: {
     path: path.join __dirname, 'build'
     filename: '[name].js'
@@ -15,7 +16,7 @@ module.exports =
   }
   module:
     loaders: [
-        { test: /\.cjsx$/, loaders: ['coffee', 'cjsx']},
+        { test: /(\.cjsx)$/, loaders: ['react-hot', 'coffee', 'cjsx']},
         { test: /\.coffee$/, loader: "coffee-loader" },
         { test: /\.(coffee\.md|litcoffee)$/, loader: "coffee-loader?literate" },
         {
@@ -31,6 +32,8 @@ module.exports =
     new HtmlWebpackPlugin
       template: 'index.html'
       inject: 'body'
+#    new webpack.HotModuleReplacementPlugin()
   ]
   devServer:
     contentBase: "./build",
+  devtool: 'sourcemaps'

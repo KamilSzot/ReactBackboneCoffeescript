@@ -25,6 +25,7 @@
     "mongodb-rest": "git://github.com/ashleydavis/mongodb-rest.git",
     "passport": "^0.2.0",
     "q": "^1.0.1",
+    "react-hot-loader": "^1.3.0",
     "style-loader": "^0.12.3",
     "supervisor": "^0.6.0",
     "url-loader": "^0.5.6",
