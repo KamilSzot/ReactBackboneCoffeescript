@@ -1,15 +1,29 @@
-{pre, h1, div, span, i, input, ul, li, button} = React.DOM
+React = require 'react'
+ReactDOM = require 'react-dom'
+ReactBootstrap = require 'react-bootstrap'
+Backbone = require 'backbone'
+$ = require 'jquery'
+_ = require 'lodash'
+
+require 'bootstrap/less/bootstrap.less'
+require './app.less'
+
+{pre, h1, div, span, i, input, ul, li, button} = ReactDOM
 {Navbar, Button} = ReactBootstrap
+
+trim = (s) ->
+  s.replace(/^s+|s+$/g, '')
 
 addCssClass = (props, classNamesToAdd) ->
   if !classNamesToAdd.length
     classNamesToAdd = [classNamesToAdd]
-  props.className = _.uniq((props.className || "").split(/\s+/).concat(classNamesToAdd)).join(" ")
+  _.extend {}, props, { className: _.uniq((props.className || "").split(/\s+/).concat(classNamesToAdd)).join(" ") }
+
 
 ButtonGlyph = React.createClass
   render: ->
-    addCssClass @props, ["glyphicon", "glyphicon-"+@props.glyph]
-    button @props
+    props = addCssClass @props, ["glyphicon", "glyphicon-"+@props.glyph]
+    <button {...props}></button>
 
 TaskCreator = React.createClass
   getInitialState: ->
@@ -22,30 +36,25 @@ TaskCreator = React.createClass
   descriptionChanged: (event) ->
     @setState({ description: event.target.value })
   createTask: ->
-    if @state.description.trim()
+    if trim(@state.description)
       @props.onTaskCreated && @props.onTaskCreated({ description: @state.description })
       @setState({ description: "" })
   render: ->
-    div { className: "row" },
-      div { className: "col-md-12" },
-        input {
-          ref: "description",
-          autoFocus: true,
-          placeholder: "Task description",
-          className: "col-md-12",
-          value: @state.description
-          onChange: @descriptionChanged,
-          onKeyDown: @keyDown
-        },
-        Button {
-          onClick: @createTask
-        }, "Add task"
+    <div className="row">
+      <div className="col-md-12">
+        <input
+          ref="description"
+          autoFocus={true}
+          placeholder="Task description"
+          className="col-md-12",
+          value={@state.description}
+          onChange={@descriptionChanged}
+          onKeyDown={@keyDown}
+        />
+        <Button onClick={@createTask}>Add task</Button>
+      </div>
+    </div>
 
-
-pair = (key, value)->
-  p = {}
-  p[key] = value
-  p
 
 
 BackboneModel = (modelPropName) ->
@@ -103,17 +112,23 @@ Task = React.createClass
   cancel: ->
     @setState { edited: false }
   render: ->
-    li {  },
-      if @state.edited
-        span {}, (if @props.task.get('important') then "[*]"),
-          ButtonGlyph { onClick: @save, glyph: 'ok'}
-          ButtonGlyph { onClick: @cancel, glyph: 'remove' }
-          input { ref: "description", value: @state.edited.description, onChange: @descriptionChanged, onKeyDown: @keyDown }
+    <li>
+      {if @state.edited
+        <span>
+          {if @props.task.get('important') then "[*]"}
+          <ButtonGlyph onClick={@save} glyph='ok' />
+          <ButtonGlyph onClick={@cancel} glyph='remove' />
+          <input ref="description" value={@state.edited.description} onChange={@descriptionChanged} onKeyDown={@keyDown} />
+        </span>
       else
-        span {}, (if @props.task.get('important') then "[*]"),
-          ButtonGlyph { onClick: @remove, glyph: 'trash' }
-          ButtonGlyph { onClick: @edit, glyph: 'pencil' }
-          span {}, @props.task.get('description')
+        <span>
+          {if @props.task.get('important') then "[*]"}
+          <ButtonGlyph onClick={@remove} glyph='trash' />
+          <ButtonGlyph onClick={@edit} glyph='pencil' />
+          <span>{@props.task.get('description')}</span>
+        </span>
+      }
+    </li>
 
 TaskList = React.createClass
   mixins: [ BackboneCollection('tasks') ]
@@ -127,16 +142,18 @@ TaskList = React.createClass
     console.log [task, newTaskData]
   render: ->
     self = this
-    div { className: "panel" },
-      div { className: "row" },
-        div { className: "col-md-12" },
-          ul { },
-            for task in @props.tasks.models
-              Task { task: task, onRemove: @removedTask, onEdited: @editedTask }
-      TaskCreator {
-        ref: "taskCreator",
-        onTaskCreated: @appendTask
-      }
+    <div className="panel">
+      <div className="row">
+        <div className="col-md-12">
+          <ul>
+            {for task in @props.tasks.models
+              <Task key={task.id} task={task} onRemove={@removedTask}, onEdited={@editedTask} />
+            }
+          </ul>
+        </div>
+      </div>
+      <TaskCreator ref="taskCreator" onTaskCreated={@appendTask} />
+    </div>
 
 
 
@@ -147,17 +164,20 @@ App = React.createClass
     $.post('http://localhost:3000/clear')
     @props.model.reset();
   render: ->
-    div {},
-      Navbar {}, [
-        h1 {}, "Worklog" + (if !@props.me then "" else " : " + @props.me.get('name').givenName + " " + @props.me.get('name').familyName),
-          div { className: 'pull-right' }, [
-            Button { onClick: @deleteAll }, "Delete all"
-            Button { href: "http://localhost:3000/auth/google" }, "Log in (via Google)"
-            Button { href: "http://localhost:3000/auth/google/logout" }, "Log out"
-          ]
-      ]
-      div { className: "container" },
-        TaskList { tasks: @props.model }
+    <div>
+      <Navbar>
+        <h1>{"Worklog" + (if !@props.me then "" else " : " + @props.me.get('name').givenName + " " + @props.me.get('name').familyName)}
+          <div className='pull-right'>
+            <Button onClick={@deleteAll}>Delete all</Button>
+            <Button href="http://localhost:3000/auth/google">Log in (via Google)</Button>
+            <Button href="http://localhost:3000/auth/google/logout">Log out</Button>
+          </div>
+        </h1>
+      </Navbar>
+      <div className="container">
+        <TaskList tasks={@props.model} />
+      </div>
+    </div>
 
 
 TaskModel = Backbone.Model.extend
@@ -209,4 +229,4 @@ $(document)
         me = null
       .always ->
         tasksCollection.fetch(reset: true).always ->
-          React.renderComponent App( model: tasksCollection || [], me: me ), document.body
+          React.render <App model={tasksCollection ? []} me={me} />, document.body
