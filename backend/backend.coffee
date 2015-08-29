@@ -47,6 +47,7 @@ db = new mongodb.Db(config.db.name, new mongodb.Server(config.db.host, config.db
 db.open (err,db) ->
   if err
     console.error "Can't connect!"
+    return
   db.authenticate config.db.username, config.db.password, () ->
     if err
       console.error "Can't authenticate!"
@@ -83,23 +84,23 @@ mongo =
 
 
 # class User
-#   Task: class 
+#   Task: class
 #     constructor: (@user) ->
 #     description: "New"
 #     log: -> l @user
-# 
+#
 #   tasks: (q) ->
 #     a = new @Task
 #     a.log()
-# 
-# 
-# 
+#
+#
+#
 # me = new User
 # me.name = "Me";
-# 
+#
 # you = new User
 # you.name = "You";
-# 
+#
 # me.tasks {a:1}
 # you.tasks {}
 
@@ -136,7 +137,7 @@ setupServer = ->
 
   passport.deserializeUser (user, done) ->
     mongo.query 'user', { _id: ID(user) }
-      .then (users) -> 
+      .then (users) ->
         done(null, users[0]);
 
 
@@ -163,7 +164,7 @@ setupServer = ->
         console.log err.stack
         setCORS res
         res.status(err.status || 500).send({ message: err.err || err.errmsg })
-        
+
       .done()
 
   app.use /^((?!\/auth|\/user).)*$/, (req, res, next) ->
@@ -184,7 +185,7 @@ setupServer = ->
     .get (req, res) ->
       if req.user
         respond res, Q.when(req.user)
-      else 
+      else
         p = Q.defer()
         p.reject({ status: 404 })
         respond res, p.promise
