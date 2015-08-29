@@ -8,8 +8,7 @@ util        = require 'util'
 
 mongoSessionStore = require 'connect-mongodb'
 
-GoogleStrategy = require('passport-google').Strategy
-
+GoogleStrategy = require('passport-google-oauth').OAuth2Strategy;
 
 mongodb   = require 'mongodb'
 ID = (value) ->
@@ -35,6 +34,9 @@ config =
     host: 'localhost'
     port: 27017
     name: 'worklog'
+  google:
+    clientId: process.argv[2]
+    clientSecret: process.argv[3]
 
 serverParams =
   auto_reconnect: true
@@ -117,17 +119,18 @@ setupServer = ->
   app.use passport.initialize()
   app.use passport.session()
 
-  app.get config.url.auth, passport.authenticate('google')
+  app.get config.url.auth, passport.authenticate('google', { scope: 'https://www.googleapis.com/auth/plus.login' })
   app.get config.url.authReturn, passport.authenticate('google', {
     successRedirect: config.url.frontend + config.url.home
     failureRedirect: config.url.frontend + config.url.home
   })
 
   passport.use new GoogleStrategy {
-      returnURL: config.url.backend + config.url.authReturn
-      realm: config.url.backend
-  }, (identifier, profile, done) ->
-    mongo.upsert "user", { openId: identifier }, { $set: profile }
+    clientID: config.google.clientId,
+    clientSecret: config.google.clientSecret,
+    callbackURL: config.url.backend + config.url.authReturn
+  }, (accessToken, refreshToken, profile, done) ->
+    mongo.upsert "user", { openId: profile.id }, { $set: profile }
       .then (user) ->
         done(null, user);
       .done()
