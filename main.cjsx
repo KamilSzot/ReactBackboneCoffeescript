@@ -1,10 +1,10 @@
+
 React = require 'react'
-ReactDOM = require 'react-dom'
+# ReactDOM = require 'react-dom'
 Backbone = require 'backbone'
 $ = require 'jquery'
 _ = require 'lodash'
 
-require 'bootstrap/less/bootstrap.less'
 require './app.less'
 
 App = require './components/App'

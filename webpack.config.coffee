@@ -1,15 +1,15 @@
 path = require 'path'
 HtmlWebpackPlugin = require 'html-webpack-plugin'
+ExtractTextPlugin = require 'extract-text-webpack-plugin'
 webpack = require 'webpack'
 module.exports =
-  entry: [
-      'webpack-dev-server/client?http://localhost:3000',
-      'webpack/hot/only-dev-server',
-      './main'
-  ]
+  entry:
+    bootstrap: [ './bootstrap-init', 'jquery', 'bootstrap', 'react-bootstrap' ]
+    vendor: [ 'jquery', 'react', 'react-dom', 'lodash', 'backbone']
+    app: [ 'webpack/hot/only-dev-server', './main' ]
   output: {
     path: path.join __dirname, 'build'
-    filename: '[name].js'
+    filename: '[name]-[hash].js'
   }
   resolve: {
     extensions: ['', '.js', '.cjsx', '.coffee']
@@ -21,18 +21,24 @@ module.exports =
         { test: /\.(coffee\.md|litcoffee)$/, loader: "coffee-loader?literate" },
         {
           test: /\.less$/,
-          loader: "style!css!less"
+          loader: ExtractTextPlugin.extract("style-loader", "css-loader!less-loader")
+        }
+        {
+          test: /\.css$/,
+          loader: ExtractTextPlugin.extract("style-loader", "css-loader")
         }
         {
             test: /\.(eot|woff|woff2|ttf|svg|png|jpg)$/,
-            loader: 'url-loader?limit=30000&name=[name]-[hash].[ext]'
+            loader: 'file-loader?name=[name]-[hash].[ext]'
         }
     ]
   plugins: [
     new HtmlWebpackPlugin
       template: 'index.html'
       inject: 'body'
-#    new webpack.HotModuleReplacementPlugin()
+    new webpack.optimize.CommonsChunkPlugin "vendor", "vendor-[hash].js"
+    new ExtractTextPlugin("[name]-[hash].css")
+
   ]
   devServer:
     contentBase: "./build",
