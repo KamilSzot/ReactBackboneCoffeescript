@@ -6,7 +6,7 @@ module.exports =
   entry:
     bootstrap: [ './bootstrap-init', 'jquery', 'bootstrap', 'react-bootstrap' ]
     vendor: [ 'jquery', 'react', 'react-dom', 'lodash', 'backbone']
-    app: [ 'webpack-dev-server/client?localhost:8080', 'webpack/hot/dev-server', './main' ]
+    app: [ 'webpack-dev-server/client?localhost:8080', 'webpack/hot/only-dev-server', './main' ]
   output: {
     path: path.join __dirname, 'build'
     filename: '[name]-[hash].js'
@@ -33,6 +33,13 @@ module.exports =
             test: /\.(eot|woff|woff2|ttf|svg|png|jpg|gif)$/,
             loader: 'file-loader?name=[name]-[hash].[ext]'
         }
+        {
+          test: /\.jsx?$/,
+          exclude: /(node_modules|bower_components)/,
+          loader: 'babel'
+          query:
+            optional: ['runtime']
+        }        
     ]
   plugins: [
     new HtmlWebpackPlugin

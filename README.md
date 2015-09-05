@@ -19,4 +19,4 @@ To start backend (http://localhost:3000/) you need to have mongodb and cofeescri
 
 To start serving frontend (http://localhost:8080/) you need to do:
 
-	webpack-dev-server
+	webpack-dev-server -h

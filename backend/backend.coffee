@@ -34,6 +34,8 @@ config =
     host: 'localhost'
     port: 27017
     name: 'worklog'
+    username: 'someuser'
+    password: 'somepass'
   google:
     clientId: process.argv[2]
     clientSecret: process.argv[3]
