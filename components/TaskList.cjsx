@@ -3,8 +3,6 @@ React = require 'react'
 
 Task = require './Task'
 TaskCreator = require './TaskCreator'
-_ = require 'lodash'
-
 
 module.exports = TaskList = React.createClass
   mixins: [ BackboneCollection('tasks') ]
