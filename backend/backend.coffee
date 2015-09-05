@@ -1,7 +1,7 @@
 express     = require 'express'
 session     = require 'express-session'
 Q           = require 'q'
-xxhash      = require 'xxhash'
+crypto      = require 'crypto'
 bodyParser  = require 'body-parser'
 passport    = require 'passport'
 util        = require 'util'
@@ -157,7 +157,7 @@ setupServer = ->
       .then (result) ->
 #         l typeof result
         responseText = new Buffer(JSON.stringify(result || null), 'utf-8')
-        res.set 'ETag', xxhash.hash(responseText, 0xCAFEBABE)
+        res.set 'ETag', crypto.createHash('md5').update(responseText).digest('hex')
         res.set 'Content-Type', 'application/json'
 
         setCORS res

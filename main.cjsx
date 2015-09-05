@@ -1,6 +1,6 @@
 
 React = require 'react'
-# ReactDOM = require 'react-dom'
+
 Backbone = require 'backbone'
 $ = require 'jquery'
 _ = require 'lodash'

@@ -1,5 +1,6 @@
-React = require 'react'
+React = require 'react/addons'
 { BackboneModel } = require '../mixins/Backbone'
+
 
 ButtonGlyph = require './ButtonGlyph'
 
@@ -23,9 +24,7 @@ module.exports = Task = React.createClass
       @cancel()
   save: ->
     @props.onEdited && @props.onEdited(@props.task, @state.edited)
-    @props.task.set('description', @state.edited.description);
-    @props.task.save();
-    console.log @props.task
+    @props.task.save(@state.edited);
     @setState { edited: false }
   cancel: ->
     @setState { edited: false }

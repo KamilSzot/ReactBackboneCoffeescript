@@ -5,7 +5,7 @@ webpack = require 'webpack'
 module.exports =
   entry:
     bootstrap: [ './bootstrap-init', 'jquery', 'bootstrap', 'react-bootstrap' ]
-    vendor: [ 'jquery', 'react', 'react-dom', 'lodash', 'backbone']
+    vendor: [ 'jquery', 'react', 'lodash', 'backbone']
     app: [ 'webpack/hot/only-dev-server', './main' ] 
   output: {
     path: path.join __dirname, 'build'
