@@ -47,7 +47,9 @@
     "jquery": "^2.1.4",
     "lodash": "^3.10.1",
     "passport-google-oauth": "^0.2.0",
-    "react": "^0.13.3",
-    "react-bootstrap": "^0.25.1"
+    "react": "^0.14.0-beta3",
+    "react-bootstrap": "^0.25.100-react-pre.0",
+    "react-dom": "^0.14.0-beta3",
+    "react-relay": "^0.2.1"
   }
 }

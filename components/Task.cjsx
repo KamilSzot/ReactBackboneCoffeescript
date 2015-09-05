@@ -1,4 +1,7 @@
-React = require 'react/addons'
+React = require 'react'
+React.addons = 
+  update: require 'react-addons-update'
+  
 { BackboneModel } = require '../mixins/Backbone'
 
 
@@ -12,7 +15,7 @@ module.exports = Task = React.createClass
     @props.task.destroy();
     @props.onRemove && @props.onRemove(@props.task)
   edit: ->
-    @setState { edited: _.clone(@props.task.attributes) }, => @refs.description.getDOMNode().focus()
+    @setState { edited: _.clone(@props.task.attributes) }, => @refs.description.focus()
     @props.onEdit && @props.onEdit(@props.task)
 
   descriptionChanged: (event) ->

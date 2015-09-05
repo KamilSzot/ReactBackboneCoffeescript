@@ -9,7 +9,7 @@ module.exports = TaskCreator = React.createClass
   getInitialState: ->
     description: ""
   focus: ->
-    @refs.description.getDOMNode().focus()
+    @refs.description.focus()
   keyDown: (event) ->
     if event.keyCode == 13
       @createTask()

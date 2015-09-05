@@ -1,5 +1,6 @@
 
 React = require 'react'
+ReactDOM = require 'react-dom'
 
 Backbone = require 'backbone'
 $ = require 'jquery'
@@ -63,4 +64,4 @@ $(document)
         me = null
       .always ->
         tasksCollection.fetch(reset: true).always ->
-          React.render <App model={tasksCollection ? []} me={me} />, document.body
+          ReactDOM.render <App model={tasksCollection ? []} me={me} />, document.getElementById('App')
