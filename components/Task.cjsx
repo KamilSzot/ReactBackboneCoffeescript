@@ -32,7 +32,7 @@ module.exports = Task = React.createClass
   cancel: ->
     @setState { edited: false }
   render: ->
-    <li>
+    <li {...@props.drag} style={@props.style} className={@props.className}>
       {if @state.edited
         <span>
           {if @props.task.get('important') then "[*]"}
