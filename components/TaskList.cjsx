@@ -3,12 +3,14 @@ React = require 'react'
 
 Task = require './Task'
 TaskCreator = require './TaskCreator'
+_ = require 'lodash'
 
 
 module.exports = TaskList = React.createClass
   mixins: [ BackboneCollection('tasks') ]
   appendTask: (taskData) ->
-    @props.tasks.add(new @props.tasks.model(taskData))
+    new @props.tasks.model(taskData).save({}, { success: (task) => @props.tasks.add(task) })
+    
     @refs.taskCreator.focus()
   removedTask: (taskData) ->
     @props.tasks.remove(taskData)
@@ -21,7 +23,7 @@ module.exports = TaskList = React.createClass
       <div className="row">
         <div className="col-md-12">
           <ul>
-            {for task in @props.tasks.models
+            {for task in @state.tasks
               <Task key={task.id} task={task} onRemove={@removedTask}, onEdited={@editedTask} />
             }
           </ul>

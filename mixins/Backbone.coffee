@@ -1,27 +1,32 @@
 
 module.exports =
   BackboneModel: (modelPropName) ->
-  #   componentDidUpdate: (prevProps, prevState) ->
-  #     change = _.chain(@state[modelPropName])
-  #       .pairs()
-  #       .reject(([key, value]) => prevState[modelPropName][key] == value)
-  #       .filter(([key, value]) => key of @props[modelPropName].attributes)
-  #     if change.size().value() > 0
-  #       @props[modelPropName].set(change.object().value())
+    copyDateToState: (event) ->
+      @setState 
+        "#{modelPropName}": @props[modelPropName].attributes
+      
+    componentWillMount: ->
+      @props[modelPropName].on 'change sync', @copyDateToState
+          
+    componentWillUnmount: ->
+      @props[modelPropName].off 'change sync', @copyDateToState
+          
     getInitialState: ->
-      @props[modelPropName].on 'change sync', (event) =>
-        if @isMounted()
-          @forceUpdate()
-  #       change = event.changed
-  #       change = _.chain(event.changed).pairs().reject(([key, value]) =>
-  #         event._previousAttributes[key] == value
-  #       )
-  #       if change.size().value() > 0
-  #         @setState pair modelPropName, _.extend(@state[modelPropName], change.object().value())
-  #     pair modelPropName, @props[modelPropName].attributes
+      "#{modelPropName}":
+        @props[modelPropName].attributes
 
-  BackboneCollection: (modelPropName) ->
+
+  BackboneCollection: (collectionPropName) ->
+    copyDateToState: (event) ->
+      @setState 
+        "#{collectionPropName}": @props[collectionPropName].models
+    
+    componentWillMount : ->
+      @props[collectionPropName].on 'add remove reset sort', @copyDateToState
+
+    componentWillUnmount : ->
+      @props[collectionPropName].off 'add remove reset sort', @copyDateToState
+            
     getInitialState: ->
-      @props[modelPropName].on 'add remove reset sort', (event) =>
-        if @isMounted()
-          @forceUpdate()
+      "#{collectionPropName}":
+        @props[collectionPropName].models

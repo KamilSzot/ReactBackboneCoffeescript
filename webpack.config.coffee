@@ -6,7 +6,7 @@ module.exports =
   entry:
     bootstrap: [ './bootstrap-init', 'jquery', 'bootstrap', 'react-bootstrap' ]
     vendor: [ 'jquery', 'react', 'react-dom', 'lodash', 'backbone']
-    app: [ 'webpack-dev-server/client?localhost:8080', 'webpack/hot/only-dev-server', './main' ]
+    app: [ 'webpack/hot/only-dev-server', './main' ] 
   output: {
     path: path.join __dirname, 'build'
     filename: '[name]-[hash].js'
@@ -16,7 +16,7 @@ module.exports =
   }
   module:
     loaders: [
-        { test: /(\.cjsx)$/, loaders: ['coffee', 'cjsx']},
+        { test: /(\.cjsx)$/, loaders: ['react-hot', 'coffee', 'cjsx']},
         { test: /\.coffee$/, loader: "coffee" },
         { test: /\.(coffee\.md|litcoffee)$/, loader: "coffee-loader?literate" },
         {

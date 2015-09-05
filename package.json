@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node node_modules/webpack-dev-server/bin/webpack-dev-server.js -h"
+    "start": "node node_modules/webpack-dev-server/bin/webpack-dev-server.js -h --inline",
+    "backend": "coffee backend/backend.coffee" 
   },
   "author": "Kamil Szot <kamil.szot@gmail.com>",
   "license": "ISC",

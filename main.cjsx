@@ -17,8 +17,6 @@ l = console.log.bind(console)
 
 
 
-
-
 TaskModel = Backbone.Model.extend
   urlRoot: 'http://localhost:3000/task'
   idAttribute: '_id'
@@ -33,9 +31,6 @@ TaskModel = Backbone.Model.extend
 TasksCollection = Backbone.Collection.extend
   model: TaskModel
   url: 'http://localhost:3000/task'
-  initialize: ->
-    @on 'add', (model) ->
-      model.save()
 
 
 User = Backbone.Model.extend

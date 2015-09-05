@@ -25,6 +25,7 @@ module.exports = Task = React.createClass
     @props.onEdited && @props.onEdited(@props.task, @state.edited)
     @props.task.set('description', @state.edited.description);
     @props.task.save();
+    console.log @props.task
     @setState { edited: false }
   cancel: ->
     @setState { edited: false }
@@ -42,7 +43,7 @@ module.exports = Task = React.createClass
           {if @props.task.get('important') then "[*]"}
           <ButtonGlyph onClick={@remove} glyph='trash' />
           <ButtonGlyph onClick={@edit} glyph='pencil' />
-          <span>{@props.task.get('description')}</span>
+          <span>{@state.task.description}</span>
         </span>
       }
     </li>
